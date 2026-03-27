@@ -26,6 +26,14 @@ interface Aircraft {
   onGround: boolean;
 }
 
+interface UkraineAlert {
+  id: string;
+  oblast: string;
+  type: string;
+  lat: number;
+  lon: number;
+}
+
 export default function LiveMap({ tracks, selected, onSelect }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -45,17 +53,37 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
   const [liveAircraft, setLiveAircraft] = useState<Aircraft[]>([]);
   const [lastFetch, setLastFetch] = useState<string>("");
   const [fetchError, setFetchError] = useState<string>("");
+  const [ukraineAlerts, setUkraineAlerts] = useState<UkraineAlert[]>([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const alertMarkersRef = useRef<any[]>([]);
 
   const fetchLiveData = useCallback(async () => {
     try {
+      // Fetch OpenSky; if count is 0 try adsb.fi backup
       const res = await fetch("/api/opensky");
       const data = await res.json();
-      if (data.aircraft) setLiveAircraft(data.aircraft);
+      let aircraft = data.aircraft || [];
+      if (aircraft.length === 0 || data.simulated) {
+        try {
+          const r2 = await fetch("/api/adsb-fi");
+          const d2 = await r2.json();
+          if ((d2.aircraft || []).length > 0) aircraft = d2.aircraft;
+        } catch { /* keep opensky result */ }
+      }
+      setLiveAircraft(aircraft);
       setLastFetch(new Date().toLocaleTimeString());
       setFetchError(data.simulated ? "sim" : "");
     } catch (e) {
       setFetchError(String(e));
     }
+  }, []);
+
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const res = await fetch("/api/alerts");
+      const data = await res.json();
+      setUkraineAlerts((data.active || []).filter((a: UkraineAlert) => a.lat && a.lon));
+    } catch { /* silently ignore */ }
   }, []);
 
   // Poll live data every 15s when in LIVE mode
@@ -65,6 +93,14 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
     const iv = setInterval(fetchLiveData, 15000);
     return () => clearInterval(iv);
   }, [dataSource, fetchLiveData]);
+
+  // Poll Ukraine alerts every 15s
+  useEffect(() => {
+    if (dataSource !== "LIVE") return;
+    fetchAlerts();
+    const iv = setInterval(fetchAlerts, 15000);
+    return () => clearInterval(iv);
+  }, [dataSource, fetchAlerts]);
 
   // Init map
   useEffect(() => {
@@ -207,6 +243,28 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [liveAircraft, dataSource]);
 
+  // Ukraine air-raid alert markers
+  useEffect(() => {
+    const L = window.L;
+    if (!L || !mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    alertMarkersRef.current.forEach(m => map.removeLayer(m));
+    alertMarkersRef.current = [];
+    ukraineAlerts.forEach(alert => {
+      const m = L.circle([alert.lat, alert.lon], {
+        radius: 40000, color: '#ff2200', fillColor: '#ff2200',
+        fillOpacity: 0.12, weight: 1, dashArray: '3,5',
+      }).addTo(map).bindTooltip(
+        `<div style="background:#1a0505;border:1px solid #ff220055;color:#ffaaaa;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace">
+          ⚠ ${alert.oblast}<br/><span style="color:#ff6666">${alert.type?.replace(/_/g,' ')?.toUpperCase()}</span>
+        </div>`,
+        { className: "custom-tooltip" }
+      );
+      alertMarkersRef.current.push(m);
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ukraineAlerts]);
+
   // Update drone simulation markers
   useEffect(() => {
     const L = window.L;
@@ -314,10 +372,16 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
                 <div className="w-1.5 h-1.5 rounded-full bg-[#4488ff]" />
                 <span className="text-[9px] font-mono text-[#4488ff]">{liveAircraft.length} aircraft{fetchError === "sim" ? " (sim)" : ""}</span>
               </div>
+              {ukraineAlerts.length > 0 && (
+                <div className="flex items-center gap-1 mb-0.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#ff2200]" />
+                  <span className="text-[9px] font-mono text-[#ff6644]">{ukraineAlerts.length} UA alerts</span>
+                </div>
+              )}
               <div className="text-[8px] text-[#334455] font-mono mt-0.5">
                 {lastFetch ? `updated ${lastFetch}` : 'fetching...'}
               </div>
-              {fetchError && (
+              {fetchError && fetchError !== "sim" && (
                 <div className="text-[8px] text-[#ff6666] font-mono mt-0.5 max-w-[120px] truncate" title={fetchError}>
                   ⚠ {fetchError}
                 </div>
@@ -334,6 +398,7 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
             { color: "#ff4444", label: "Terminal threat" },
             { color: "#ffaa00", label: "Approach" },
             { color: "#4488ff", label: "Live aircraft" },
+            { color: "#ff2200", label: "UA air-raid zone" },
             { color: "#00d4ff", label: "Airport zone" },
             { color: "#ff4444", label: "Nuclear zone" },
             { color: "#ffaa00", label: "Military zone" },
