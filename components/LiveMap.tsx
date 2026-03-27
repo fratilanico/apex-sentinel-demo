@@ -48,13 +48,42 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
 
   const fetchLiveData = useCallback(async () => {
     try {
+      // Try client-side fetch with OAuth token (bypasses Vercel IP block)
+      const tokenRes = await fetch("/api/opensky-token");
+      if (tokenRes.ok) {
+        const { token } = await tokenRes.json();
+        if (token) {
+          const osRes = await fetch(
+            "https://opensky-network.org/api/states/all?lamin=43.5&lomin=20.2&lamax=48.5&lomax=30.0",
+            { headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(10000) }
+          );
+          if (osRes.ok) {
+            const raw = await osRes.json();
+            const aircraft: Aircraft[] = (raw.states || [])
+              .filter((s: unknown[]) => s[5] != null && s[6] != null)
+              .map((s: unknown[]) => ({
+                icao24:   String(s[0]),
+                callsign: (s[1] as string)?.trim() || null,
+                lat:      s[6] as number,
+                lon:      s[5] as number,
+                altitude: (s[7] ?? s[13]) as number | null,
+                velocity: s[9] as number | null,
+                heading:  s[10] as number | null,
+                onGround: s[8] as boolean,
+              }));
+            setLiveAircraft(aircraft);
+            setLastFetch(new Date().toLocaleTimeString());
+            setFetchError("");
+            return;
+          }
+        }
+      }
+      // Fallback to server proxy (returns simulated if OpenSky unreachable)
       const res = await fetch("/api/opensky");
       const data = await res.json();
-      if (data.aircraft) {
-        setLiveAircraft(data.aircraft);
-      }
+      if (data.aircraft) setLiveAircraft(data.aircraft);
       setLastFetch(new Date().toLocaleTimeString());
-      setFetchError("");
+      setFetchError(data.simulated ? "sim" : "");
     } catch (e) {
       setFetchError(String(e));
     }
@@ -314,7 +343,7 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
             <div className="mt-1.5">
               <div className="flex items-center gap-1 mb-0.5">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#4488ff]" />
-                <span className="text-[9px] font-mono text-[#4488ff]">{liveAircraft.length} aircraft</span>
+                <span className="text-[9px] font-mono text-[#4488ff]">{liveAircraft.length} aircraft{fetchError === "sim" ? " (sim)" : ""}</span>
               </div>
               <div className="text-[8px] text-[#334455] font-mono mt-0.5">
                 {lastFetch ? `updated ${lastFetch}` : 'fetching...'}
