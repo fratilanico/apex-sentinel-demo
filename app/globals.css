@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy:    #0d1b2a;
+  --navy2:   #0f2035;
+  --navy3:   #162840;
+  --panel:   #0a1525;
+  --cyan:    #00d4ff;
+  --amber:   #ffaa00;
+  --threat:  #ff4444;
+  --safe:    #00e676;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--navy);
+  color: #c8d8e8;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+}
+
+/* Leaflet dark override */
+.leaflet-container {
+  background: #0a1220 !important;
+  font-family: 'Inter', sans-serif;
+}
+.leaflet-tile-pane { filter: brightness(0.6) saturate(0.4) hue-rotate(200deg); }
+.leaflet-control-attribution { display: none !important; }
+.leaflet-control-zoom a {
+  background: #162840 !important;
+  color: #00d4ff !important;
+  border-color: rgba(0,212,255,0.2) !important;
+}
+
+/* Pulse animation */
+@keyframes pulse-ring {
+  0%   { transform: scale(1); opacity: 1; }
+  100% { transform: scale(3); opacity: 0; }
+}
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+@keyframes scan-line {
+  0%   { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.pulse-ring { animation: pulse-ring 1.5s ease-out infinite; }
+.blink       { animation: blink 1s ease-in-out infinite; }
+.fade-in-up  { animation: fade-in-up 0.4s ease both; }
+
+/* scrollbar */
+::-webkit-scrollbar       { width: 4px; }
+::-webkit-scrollbar-track { background: var(--navy); }
+::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+
+/* grid pattern overlay */
+.grid-bg {
+  background-image:
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
