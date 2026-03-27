@@ -122,7 +122,12 @@ export default function TopBar({ activeCount, terminalCount, tab, onTab }: TopBa
             </div>
           );
         })}
-        <div className="ml-auto text-[8px] font-mono text-[#1a2a3a]">FIR LRBB · Romania AOR</div>
+        <div className="ml-auto flex items-center gap-3">
+          <span className="text-[8px] font-mono text-[#1a2a3a]">FIR LRBB · Romania AOR</span>
+          <a href="/presentation" className="text-[8px] font-bold font-mono tracking-widest text-[#334455] hover:text-[#00d4ff] transition-colors uppercase border border-[rgba(0,212,255,0.1)] px-1.5 py-0.5 rounded hover:border-[rgba(0,212,255,0.3)]">
+            DECK →
+          </a>
+        </div>
       </div>
     </div>
   );
