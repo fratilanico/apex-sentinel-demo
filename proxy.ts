@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-const PASSWORD = "INDIGO!APEX!2026";
+const PASSWORD = "APEX!2026!ATLANTIS";
 const COOKIE_NAME = "apex_auth";
 
 export function proxy(req: NextRequest) {
