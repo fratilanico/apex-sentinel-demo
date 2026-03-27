@@ -4,14 +4,14 @@ import path from 'path'
 
 export default defineConfig({
   plugins: [react()],
-  environment: 'jsdom',
-  setupFiles: ['./src/test/setup.ts'],
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'),
     },
   },
   test: {
+    environment: 'jsdom',
+    setupFiles: ['./src/test/setup.ts'],
     coverage: {
       provider: 'v8',
       thresholds: { branches: 80, functions: 80, lines: 80, statements: 80 }
