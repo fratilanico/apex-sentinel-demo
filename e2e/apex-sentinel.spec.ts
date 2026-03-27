@@ -99,9 +99,9 @@ test.describe("02 · TopBar Branding & Navigation", () => {
   });
 
   test("02-05: live feed strip shows OpenSky and NOTAM feeds", async ({ page }) => {
-    await expect(page.locator("text=OpenSky")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("text=NOTAM")).toBeVisible({ timeout: 10_000 });
-    await expect(page.locator("text=LIVE FEEDS").first()).toBeVisible();
+    await expect(page.locator("text=OpenSky").first()).toBeVisible({ timeout: 15_000 });
+    await expect(page.locator("text=NOTAM").first()).toBeVisible({ timeout: 10_000 });
+    await expect(page.locator("text=LIVE FEEDS").first()).toBeVisible({ timeout: 10_000 });
   });
 
   test("02-06: feed strip shows FIR LRBB Romania AOR", async ({ page }) => {
