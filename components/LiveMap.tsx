@@ -2,10 +2,20 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import { DroneTrack, DRONE_META, SENTINEL_NODES, PROTECTED_ZONES } from "@/lib/simulation";
 
+interface SecurityEvent {
+  lat: number;
+  lon: number;
+  date: string;
+  type: string;
+  notes: string;
+  source: string;
+}
+
 interface Props {
   tracks: DroneTrack[];
   selected: string | null;
   onSelect: (id: string) => void;
+  securityEvents?: SecurityEvent[];
 }
 
 declare global {
@@ -34,7 +44,7 @@ interface UkraineAlert {
   lon: number;
 }
 
-export default function LiveMap({ tracks, selected, onSelect }: Props) {
+export default function LiveMap({ tracks, selected, onSelect, securityEvents = [] }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const mapInstanceRef = useRef<any>(null);
@@ -265,6 +275,34 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ukraineAlerts]);
 
+  // Security event markers (ACLED/GDELT)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const secEvtMarkersRef = useRef<any[]>([]);
+  useEffect(() => {
+    const L = window.L;
+    if (!L || !mapInstanceRef.current) return;
+    const map = mapInstanceRef.current;
+    secEvtMarkersRef.current.forEach((m) => map.removeLayer(m));
+    secEvtMarkersRef.current = [];
+    securityEvents.forEach((evt, i) => {
+      const html = `<div style="width:8px;height:8px;border-radius:50%;background:#ff6b6b;box-shadow:0 0 6px #ff6b6b;opacity:0.8"/>`;
+      const icon = L.divIcon({ html, className: "", iconSize: [8, 8], iconAnchor: [4, 4] });
+      const m = L.marker([evt.lat, evt.lon], { icon, zIndexOffset: -100 })
+        .addTo(map)
+        .bindTooltip(
+          `<div style="background:#1a0510;border:1px solid #ff6b6b55;color:#ffaaaa;padding:4px 8px;border-radius:4px;font-size:10px;font-family:monospace;max-width:220px">
+            <b style="color:#ff6b6b">[${evt.source}] ${evt.type}</b><br/>
+            <span style="color:#cc8888">${evt.date}</span><br/>
+            ${(evt.notes || '').slice(0, 100)}
+          </div>`,
+          { className: "custom-tooltip" }
+        );
+      secEvtMarkersRef.current.push(m);
+      void i; // suppress unused
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [securityEvents]);
+
   // Update drone simulation markers
   useEffect(() => {
     const L = window.L;
@@ -399,6 +437,7 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
             { color: "#ffaa00", label: "Approach" },
             { color: "#4488ff", label: "Live aircraft" },
             { color: "#ff2200", label: "UA air-raid zone" },
+            { color: "#ff6b6b", label: "SIGINT event" },
             { color: "#00d4ff", label: "Airport zone" },
             { color: "#ff4444", label: "Nuclear zone" },
             { color: "#ffaa00", label: "Military zone" },
