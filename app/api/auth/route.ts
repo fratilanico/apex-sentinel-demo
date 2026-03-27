@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-const PASSWORD = process.env.SITE_PASSWORD || "APEX!2026!ATLANTIS";
+const PASSWORD = process.env.SITE_PASSWORD || "INDIGO!APEX!2026";
 
 export async function POST(req: Request) {
   const { password } = await req.json();
