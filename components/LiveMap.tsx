@@ -41,7 +41,7 @@ export default function LiveMap({ tracks, selected, onSelect }: Props) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const aircraftMarkersRef = useRef<Map<string, any>>(new Map());
 
-  const [dataSource, setDataSource] = useState<"SIM" | "LIVE">("SIM");
+  const [dataSource, setDataSource] = useState<"SIM" | "LIVE">("LIVE");
   const [liveAircraft, setLiveAircraft] = useState<Aircraft[]>([]);
   const [lastFetch, setLastFetch] = useState<string>("");
   const [fetchError, setFetchError] = useState<string>("");
