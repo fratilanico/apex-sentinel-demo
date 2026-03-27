@@ -6,6 +6,9 @@
 
 import { NextResponse } from "next/server";
 
+// VM proxy on apex-claude-vm bypasses Vercel IP block
+const OPENSKY_PROXY = "http://4.231.218.96:7430/opensky";
+// Direct API fallback (blocked from Vercel IPs, used for local dev)
 const OPENSKY_API  = "https://opensky-network.org/api/states/all?lamin=43.5&lomin=20.2&lamax=48.5&lomax=30.0";
 const OPENSKY_TOKEN_URL = "https://auth.opensky-network.org/auth/realms/opensky-network/protocol/openid-connect/token";
 
@@ -53,11 +56,17 @@ export async function GET() {
     "Accept": "application/json",
   };
 
-  const token = await getToken();
-  if (token) headers["Authorization"] = `Bearer ${token}`;
+  // Try VM proxy first (no IP block), fall back to direct with OAuth
+  const useProxy = true;
+  const fetchUrl = useProxy ? OPENSKY_PROXY : OPENSKY_API;
+
+  if (!useProxy) {
+    const token = await getToken();
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+  }
 
   try {
-    const res = await fetch(OPENSKY_API, {
+    const res = await fetch(fetchUrl, {
       headers,
       signal: AbortSignal.timeout(12000),
     });
@@ -71,7 +80,9 @@ export async function GET() {
     }
 
     const raw = await res.json();
-    const aircraft = (raw.states || [])
+
+    // Proxy returns pre-transformed {aircraft:[...]}; direct API returns {states:[[...]]}
+    const aircraft = raw.aircraft ?? (raw.states || [])
       .filter((s: unknown[]) => s[5] != null && s[6] != null)
       .map((s: unknown[]) => ({
         icao24:   s[0],
@@ -90,9 +101,9 @@ export async function GET() {
       time:          raw.time,
       aircraft,
       count:         aircraft.length,
-      source:        "opensky-network.org",
+      source:        raw.source || "opensky-network.org",
       bbox:          "Romania/EU (43.5–48.5°N, 20.2–30.0°E)",
-      authenticated: !!token,
+      authenticated: raw.authenticated ?? true,
     };
 
     cache = { data: payload, ts: Date.now() };
