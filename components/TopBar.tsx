@@ -70,7 +70,7 @@ export default function TopBar({ activeCount, terminalCount, tab, onTab }: TopBa
         {/* Logo */}
         <div className="flex items-center gap-2 mr-2">
           <div className="w-2 h-2 rounded-full bg-[#00e676] shadow-[0_0_8px_#00e676]" style={{ animation: 'blink 1s infinite' }} />
-          <span className="font-mono font-bold text-[#e8f4ff] tracking-wider">APEX-SENTINEL</span>
+          <span className="font-mono font-bold text-[#e8f4ff] tracking-wider">INDIGO SENTINEL</span>
           <span className="text-[10px] font-mono text-[#556a7a] ml-1">EU Airspace Security Platform · Romania</span>
         </div>
 

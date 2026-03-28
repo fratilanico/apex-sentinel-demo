@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "APEX-SENTINEL — Live Intelligence",
-  description: "Acoustic drone detection & counter-UAS system",
+  title: "INDIGO SENTINEL — Live Intelligence",
+  description: "Acoustic drone detection & counter-UAS intelligence platform",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
