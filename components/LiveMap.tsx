@@ -350,6 +350,7 @@ export default function LiveMap({ tracks, selected, onSelect, securityEvents = [
           .on("click", () => onSelect(track.id))
           .bindTooltip(
             `<div style="background:#0f2035;border:1px solid ${color}55;color:#c8d8e8;padding:6px 10px;border-radius:6px;font-size:11px;min-width:160px;font-family:monospace">
+              <div style="font-size:8px;color:#ffaa00;letter-spacing:1px;margin-bottom:3px">⬡ SIMULATED THREAT TRACK</div>
               <div style="font-weight:700;color:${color};margin-bottom:4px">${track.id} — ${track.phase}</div>
               <div>${meta.label}</div>
               <div style="color:#7a9ab8;font-size:10px;margin-top:2px">${track.freqHz[0]}–${track.freqHz[1]} Hz · ${(track.confidence * 100).toFixed(0)}% conf</div>
@@ -430,30 +431,63 @@ export default function LiveMap({ tracks, selected, onSelect, securityEvents = [
 
         {/* Legend */}
         <div className="bg-[rgba(10,21,37,0.92)] border border-[rgba(0,212,255,0.1)] rounded-lg p-2 backdrop-blur-sm">
-          <div className="text-[9px] font-mono text-[#556a7a] uppercase tracking-wider mb-1">Legend</div>
+          <div className="text-[9px] font-mono text-[#556a7a] uppercase tracking-wider mb-1.5">Legend</div>
+
+          {/* Live data items */}
+          <div className="text-[8px] font-mono text-[#00e676] uppercase tracking-wider mb-1">— Live Data</div>
           {[
-            { color: "#00e676", label: "Sentinel Node" },
-            { color: "#ff4444", label: "Terminal threat" },
-            { color: "#ffaa00", label: "Approach" },
-            { color: "#4488ff", label: "Live aircraft" },
+            { color: "#00e676", label: "Sentinel node" },
+            { color: "#4488ff", label: "Aircraft (ADS-B)" },
             { color: "#ff2200", label: "UA air-raid zone" },
             { color: "#ff6b6b", label: "SIGINT event" },
-            { color: "#00d4ff", label: "Airport zone" },
-            { color: "#ff4444", label: "Nuclear zone" },
+            { color: "#00d4ff", label: "Airport no-fly" },
             { color: "#ffaa00", label: "Military zone" },
+            { color: "#ff4444", label: "Nuclear zone" },
           ].map(l => (
             <div key={l.label} className="flex items-center gap-1.5 mb-0.5">
               <div className="w-2 h-2 rounded-full" style={{ background: l.color }} />
               <span className="text-[9px] font-mono text-[#556a7a]">{l.label}</span>
             </div>
           ))}
+
+          {/* Simulated items */}
+          <div className="text-[8px] font-mono text-[#ffaa00] uppercase tracking-wider mt-2 mb-1">— Demo Scenario</div>
+          {[
+            { color: "#ff4444", label: "UAS threat (simulated)" },
+            { color: "#ffaa00", label: "UAS approach (simulated)" },
+            { color: "#00e676", label: "UAS neutralised (sim)" },
+          ].map(l => (
+            <div key={l.label} className="flex items-center gap-1.5 mb-0.5">
+              <div className="w-2 h-2 rounded-full opacity-70 border border-[rgba(255,170,0,0.4)]" style={{ background: l.color }} />
+              <span className="text-[9px] font-mono text-[#4a5a6a]">{l.label}</span>
+            </div>
+          ))}
         </div>
       </div>
 
+      {/* Live feeds badge */}
       {dataSource === "LIVE" && (
         <div className="absolute top-3 left-3 z-[1000] flex items-center gap-1.5 px-2 py-1 rounded-full bg-[rgba(68,136,255,0.15)] border border-[#4488ff55] backdrop-blur-sm">
           <div className="w-1.5 h-1.5 rounded-full bg-[#4488ff]" style={{ animation: 'blink 1s infinite' }} />
           <span className="font-mono text-[10px] font-bold text-[#4488ff] tracking-wider">LIVE FEEDS ACTIVE</span>
+        </div>
+      )}
+
+      {/* Demo scenario explanation — always visible when drone tracks exist */}
+      {tracks.filter(t => t.phase !== 'NEUTRALISED' && t.phase !== 'MISSED').length > 0 && (
+        <div className="absolute top-3 right-[180px] z-[1000] max-w-[220px]">
+          <div className="bg-[rgba(10,21,37,0.92)] border border-[rgba(255,170,0,0.3)] rounded-lg px-3 py-2 backdrop-blur-sm">
+            <div className="flex items-center gap-1.5 mb-1">
+              <div className="w-1.5 h-1.5 rounded-full bg-[#ffaa00]" style={{ animation: 'blink 1s infinite' }} />
+              <span className="text-[9px] font-mono font-bold text-[#ffaa00] uppercase tracking-wider">Demo Scenario</span>
+            </div>
+            <div className="text-[9px] text-[#7a9ab8] leading-relaxed">
+              Coloured moving dots (UAS-001 etc.) are <span className="text-[#ffaa00] font-bold">simulated</span> hostile drone tracks — showing how SENTINEL would respond to a real incursion. They are not real drones.
+            </div>
+            <div className="text-[9px] text-[#556a7a] mt-1">
+              Blue triangles = <span className="text-[#4488ff]">real aircraft</span> (live ADS-B)
+            </div>
+          </div>
         </div>
       )}
     </div>
