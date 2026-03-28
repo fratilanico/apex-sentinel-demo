@@ -153,26 +153,29 @@ export default function ProtectedZonesPanel({ tracks }: Props) {
                   <div className="text-[12px] text-[#7a9ab8] mb-3">{AWNING_DESC[zone.awning]}</div>
 
                   <div className="grid grid-cols-3 gap-3 mb-3">
-                    <div className="bg-[#0a1525] rounded-lg p-2.5 text-center">
+                    <div className="bg-[#0a1525] rounded-lg p-2.5 text-center relative">
+                      <div className="absolute top-1 right-1 text-[7px] font-mono text-[#ffaa00] opacity-60">DEMO</div>
                       <CountUp target={dronesTargeting} color={dronesTargeting>0?"#ff4444":"#556a7a"} />
-                      <div className="text-[9px] text-[#556a7a] uppercase tracking-wide mt-0.5">Drones approaching</div>
+                      <div className="text-[9px] text-[#556a7a] uppercase tracking-wide mt-0.5">UAS scenario</div>
                       <DetectionBar count={dronesTargeting} max={maxDetections} />
                     </div>
-                    <div className="bg-[#0a1525] rounded-lg p-2.5 text-center">
+                    <div className="bg-[#0a1525] rounded-lg p-2.5 text-center relative">
+                      <div className="absolute top-1 right-1 text-[7px] font-mono text-[#ffaa00] opacity-60">DEMO</div>
                       <span className="font-mono text-[16px] font-bold text-[#00d4ff]">
                         {closestDist < Infinity ? `${closestDist.toFixed(1)} km` : "—"}
                       </span>
-                      <div className="text-[9px] text-[#556a7a] uppercase tracking-wide mt-0.5">Nearest contact</div>
+                      <div className="text-[9px] text-[#556a7a] uppercase tracking-wide mt-0.5">Nearest (scenario)</div>
                       {closestId && <div className="text-[9px] font-mono text-[#556a7a] mt-0.5">{closestId}</div>}
                     </div>
-                    <div className="bg-[#0a1525] rounded-lg p-2.5 text-center">
+                    <div className="bg-[#0a1525] rounded-lg p-2.5 text-center relative">
+                      <div className="absolute top-1 right-1 text-[7px] font-mono text-[#00e676] opacity-80">LIVE</div>
                       <CountUp target={notams} color={notams>0?"#ffaa00":"#556a7a"} />
-                      <div className="text-[9px] text-[#556a7a] uppercase tracking-wide mt-0.5">Active flight notices</div>
+                      <div className="text-[9px] text-[#556a7a] uppercase tracking-wide mt-0.5">Active NOTAMs</div>
                     </div>
                   </div>
 
-                  <div className="text-[10px] font-mono text-[#556a7a]">
-                    {dronesTargeting>0 ? `⚠ ${dronesTargeting} drone${dronesTargeting>1?"s":""} currently vectoring toward this zone` : "✓ No drones heading toward this zone"}
+                  <div className="text-[9px] font-mono text-[#334455]">
+                    DEMO = live threat simulation scenario · LIVE = real NOTAM data from ROMATSA
                   </div>
                 </div>
 
