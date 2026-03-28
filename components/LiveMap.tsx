@@ -303,11 +303,20 @@ export default function LiveMap({ tracks, selected, onSelect, securityEvents = [
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [securityEvents]);
 
-  // Update drone simulation markers
+  // Update drone simulation markers — only visible in SIM mode
   useEffect(() => {
     const L = window.L;
     if (!L || !mapInstanceRef.current) return;
     const map = mapInstanceRef.current;
+
+    // In LIVE mode: clear all drone markers and bail
+    if (dataSource === "LIVE") {
+      markersRef.current.forEach(m => map.removeLayer(m));
+      markersRef.current.clear();
+      trailsRef.current.forEach(t => map.removeLayer(t));
+      trailsRef.current.clear();
+      return;
+    }
 
     const activeDrones = new Set(tracks.filter(t => t.phase !== 'MISSED').map(t => t.id));
 
@@ -381,7 +390,7 @@ export default function LiveMap({ tracks, selected, onSelect, securityEvents = [
       heatLayerRef.current.setLatLngs([...nodeHeat, ...terminalHeat]);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tracks]);
+  }, [tracks, dataSource]);
 
   return (
     <div className="relative w-full h-full">
@@ -390,17 +399,21 @@ export default function LiveMap({ tracks, selected, onSelect, securityEvents = [
       {/* Data source toggle */}
       <div className="absolute bottom-4 right-4 flex flex-col gap-1.5 z-[1000]">
         <div className="bg-[rgba(10,21,37,0.92)] border border-[rgba(0,212,255,0.2)] rounded-lg p-2 backdrop-blur-sm">
-          <div className="text-[9px] font-mono text-[#556a7a] uppercase tracking-wider mb-1.5">Data Layer</div>
-          <div className="flex gap-1">
-            {(["SIM", "LIVE"] as const).map(mode => (
+          <div className="text-[9px] font-mono text-[#556a7a] uppercase tracking-wider mb-1.5">View Mode</div>
+          <div className="flex flex-col gap-1">
+            {([
+              { mode: "SIM", label: "Demo scenario", desc: "Simulated UAS threats" },
+              { mode: "LIVE", label: "Live feeds", desc: "Real ADS-B aircraft" },
+            ] as const).map(({ mode, label, desc }) => (
               <button key={mode}
                 onClick={() => setDataSource(mode)}
-                className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold transition-colors ${
+                className={`px-2 py-1 rounded text-left transition-colors ${
                   dataSource === mode
-                    ? "bg-[#00d4ff] text-[#0a1220]"
-                    : "border border-[rgba(0,212,255,0.2)] text-[#556a7a] hover:text-[#c8d8e8]"
+                    ? "bg-[rgba(0,212,255,0.15)] border border-[rgba(0,212,255,0.4)]"
+                    : "border border-[rgba(0,212,255,0.1)] hover:border-[rgba(0,212,255,0.25)]"
                 }`}>
-                {mode}
+                <div className={`text-[10px] font-mono font-bold ${dataSource === mode ? "text-[#00d4ff]" : "text-[#556a7a]"}`}>{label}</div>
+                <div className="text-[8px] font-mono text-[#334455]">{desc}</div>
               </button>
             ))}
           </div>
@@ -473,8 +486,8 @@ export default function LiveMap({ tracks, selected, onSelect, securityEvents = [
         </div>
       )}
 
-      {/* Demo scenario explanation — always visible when drone tracks exist */}
-      {tracks.filter(t => t.phase !== 'NEUTRALISED' && t.phase !== 'MISSED').length > 0 && (
+      {/* Demo scenario explanation — only in SIM mode */}
+      {dataSource === "SIM" && tracks.filter(t => t.phase !== 'NEUTRALISED' && t.phase !== 'MISSED').length > 0 && (
         <div className="absolute top-3 right-[180px] z-[1000] max-w-[220px]">
           <div className="bg-[rgba(10,21,37,0.92)] border border-[rgba(255,170,0,0.3)] rounded-lg px-3 py-2 backdrop-blur-sm">
             <div className="flex items-center gap-1.5 mb-1">
